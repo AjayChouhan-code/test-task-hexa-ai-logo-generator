@@ -1,0 +1,21 @@
+export const TextFile = {
+    Your_Design : "Your Design",
+    Prompt : "Prompt",
+    Copy : "Copy",
+    AI_Logo: "AI Logo",
+    Enter_Your_Prompt: "Enter Your Prompt",
+    Surprise_Me: "Surprise me",
+    Logo_Styles: "Logo Styles",
+    Pending: "pending",
+    Completed: "completed",
+    Error: "error",
+    Creating_Your_Design: "Creating your design",
+    Your_Design_Is_Ready: "Your Design is Ready!",
+    Something_Went_Wrong: "Oops, something went wrong!",
+    Ready_In_Minutes: "Ready in 2 minutes",
+    Tap_To_See_It: "Tap to see it.",
+    Click_To_Try_Again: "Click to try again.",
+    Placeholder: "A blue lion reading HEXA in bold letters",
+    Create: "Create"
+  };
+  
