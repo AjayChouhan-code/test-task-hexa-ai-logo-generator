@@ -283,6 +283,7 @@ export default function Index() {
                 multiline={true}
                 style={styles.inputTextColor}
                 placeholderTextColor={Colors.DimGrey}
+                textAlignVertical={'top'}
               />
               <CustomText
                 style={styles.testCount}
