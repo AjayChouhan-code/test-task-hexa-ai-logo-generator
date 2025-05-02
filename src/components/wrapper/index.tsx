@@ -1,6 +1,8 @@
 import React from "react";
 import { StyleSheet, ImageBackground } from "react-native";
 
+import {PNGImages} from '../../assets/images'
+
 type Props = {
   children: any;
 };
@@ -8,7 +10,7 @@ type Props = {
 export const Wrapper = ({ children }: Props) => {
   return (
     <ImageBackground
-      source={require("../../../assets/images/backGradient.png")}
+      source={PNGImages.BackGradient}
       style={styles.imageBackground}
     >
       {children}

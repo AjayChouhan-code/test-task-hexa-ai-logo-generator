@@ -1,7 +1,7 @@
 export const Colors = {
   White: "#FAFAFA",
   QuickSilver: "#A1A1AA",
-  Black: "#000", //
+  Black: "#000",
   RaisinBlack: "#27272A",
   ShadowGray: "#3D3D46",
   NewYorkPink: "#DF7F7C",

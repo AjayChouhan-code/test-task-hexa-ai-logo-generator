@@ -1,6 +1,7 @@
-import { ActivityIndicator } from "react-native";
 import React from "react";
-import { Colors } from "react-native/Libraries/NewAppScreen";
+import { ActivityIndicator } from "react-native";
+
+import { Colors } from "@/src/utils/colors";
 
 type Props = {
   size: "large" | "small";

@@ -1,16 +1,18 @@
+import React from "react";
 import {
   StyleProp,
   StyleSheet,
   TextStyle,
   TouchableOpacity,
+  View,
   ViewStyle,
 } from "react-native";
-import React from "react";
+import { LinearGradient } from "expo-linear-gradient";
+
 import { moderateScale } from "@/src/utils/helper";
 import { Colors } from "@/src/utils/colors";
 import { Loader } from "../loader";
 import { CustomText } from "../customText";
-import { LinearGradient } from "expo-linear-gradient";
 
 type Props = {
   containerStyle?: StyleProp<ViewStyle>;
@@ -36,31 +38,37 @@ export const CustomButton = ({
   color,
 }: Props) => {
   return (
-    <LinearGradient
-      colors={[Colors.PersianBlue, Colors.Veronica]}
-      style={[styles.container, containerStyle]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
+    <TouchableOpacity
+      style={styles.button}
+      onPress={onPress}
+      disabled={disabled}
     >
-      <TouchableOpacity
-        style={styles.button}
-        onPress={onPress}
-        disabled={disabled}
+      <LinearGradient
+        colors={
+          disabled
+            ? [Colors.DimGrey, Colors.DimGrey]
+            : [Colors.PersianBlue, Colors.Veronica]
+        }
+        style={[styles.container, containerStyle]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
       >
         {loading ? (
           <Loader color={Colors.Black} size="small" />
         ) : (
-          <CustomText
-            style={[styles.text, textStyle]}
-            weight={weight}
-            color={color}
-          >
-            {text}
-          </CustomText>
+          <View style={styles.button}>
+            <CustomText
+              style={[styles.text, textStyle]}
+              weight={weight}
+              color={color}
+            >
+              {text}
+            </CustomText>
+            {prefix}
+          </View>
         )}
-        {prefix}
-      </TouchableOpacity>
-    </LinearGradient>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 };
 
@@ -74,10 +82,11 @@ const styles = StyleSheet.create({
   text: {
     fontSize: moderateScale(16),
   },
-  button : {
+  button: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     height: "100%",
-  }
+    flex: 1,
+  },
 });

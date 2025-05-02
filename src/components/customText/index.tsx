@@ -2,6 +2,7 @@ import React from "react";
 import { Text, StyleSheet, StyleProp, TextStyle } from "react-native";
 
 import { Colors } from "@/src/utils/colors";
+import { getFontFamily } from "@/src/utils/helper";
 
 type Props = {
   children: any;
@@ -18,23 +19,6 @@ export const CustomText = ({
   color,
   numOfLines,
 }: Props) => {
-  const getFontFamily = (weight?: Props["weight"]) => {
-    switch (weight) {
-      case "500":
-        return "ManropeMedium";
-      case "600":
-        return "ManropeBold";
-      case "700":
-        return "ManropeBold";
-      case "800":
-        return "ManropeExtraBold";
-      case "regular":
-        return "ManropeRegular";
-      default:
-        return "ManropeRegular";
-    }
-  };
-
   return (
     <Text
       style={[
@@ -51,6 +35,6 @@ export const CustomText = ({
 
 const styles = StyleSheet.create({
   textStyle: {
-    fontFamily: "ManropeRegular",
+    fontFamily: getFontFamily("regular"),
   },
 });

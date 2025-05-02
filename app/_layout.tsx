@@ -1,17 +1,17 @@
+import { useEffect } from "react";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
 import { Stack } from "expo-router";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    ManropeBold: require("../assets/fonts/Manrope-Bold.ttf"),
-    ManropeExtraBold: require("../assets/fonts/Manrope-ExtraBold.ttf"),
-    ManropeMedium: require("../assets/fonts/Manrope-Medium.ttf"),
-    ManropeRegular: require("../assets/fonts/Manrope-Regular.ttf"),
-    ManropeSemiBold: require("../assets/fonts/Manrope-SemiBold.ttf"),
+    ManropeBold: require("../src/assets/fonts/Manrope-Bold.ttf"),
+    ManropeExtraBold: require("../src/assets/fonts/Manrope-ExtraBold.ttf"),
+    ManropeMedium: require("../src/assets/fonts/Manrope-Medium.ttf"),
+    ManropeRegular: require("../src/assets/fonts/Manrope-Regular.ttf"),
+    ManropeSemiBold: require("../src/assets/fonts/Manrope-SemiBold.ttf"),
   });
 
   useEffect(() => {

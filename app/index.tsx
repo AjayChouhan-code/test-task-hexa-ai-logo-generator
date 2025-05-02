@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { Keyboard, TouchableWithoutFeedback } from "react-native";
 
 import { Colors } from "@/src/utils/colors";
 import { moderateScale } from "@/src/utils/helper";
@@ -23,9 +24,14 @@ import {
   NoStyle,
   Spark,
   Error,
-} from "../assets/images/svgs";
+} from "../src/assets/images/svgs";
 import { Wrapper } from "@/src/components/wrapper";
-import { TextFile } from "@/src/utils/textFile";
+import { TextConstants } from "@/src/utils/textConstants";
+import {
+  handleCreate,
+  subscribeToStatus,
+} from "@/src/firebase/firestoreService";
+import { PNGImages } from "@/src/assets/images";
 
 type LogoDataProps = {
   id: number;
@@ -61,8 +67,11 @@ export default function Index() {
 
   const [prompt, setPrompt] = useState<string>("");
 
-  const [selectedLogoStyle, setSelectedLogoStyle] = useState<number>(1);
+  const [selectedLogoStyle, setSelectedLogoStyle] = useState<string>(
+    logoStyles[0].name
+  );
   const [status, setStatus] = useState<string>("");
+  const [generatedImage, setGeneratedImage] = useState<string>("");
 
   const getLeftBoxContent = () => {
     return (
@@ -70,32 +79,37 @@ export default function Index() {
         style={[
           {
             backgroundColor:
-              status === TextFile.Error
+              status === TextConstants.Error
                 ? Colors.NewYorkPink
                 : Colors.EerieBlack,
           },
           styles.topBoxLeftContainer,
         ]}
       >
-        {status === TextFile.Pending && <ActivityIndicator />}
-        {status === TextFile.Completed && (
+        {status === TextConstants.Pending && <ActivityIndicator />}
+        {status === TextConstants.Completed && (
           <Image
-            resizeMode="center"
-            source={require("../assets/images/GenerateImage.png")}
+            resizeMode="cover"
+            source={
+              generatedImage
+                ? { uri: generatedImage }
+                : PNGImages.GeneratedImage
+            }
+            style={{ height: "100%", width: "100%" }}
           />
         )}
-        {status === TextFile.Error && <Error />}
+        {status === TextConstants.Error && <Error />}
       </View>
     );
   };
 
   const getGradientColor = (): [string, string] => {
     switch (status) {
-      case TextFile.Pending:
+      case TextConstants.Pending:
         return [Colors.RaisinBlack, Colors.RaisinBlack];
-      case TextFile.Completed:
+      case TextConstants.Completed:
         return [Colors.PersianBlue, Colors.Veronica];
-      case TextFile.Error:
+      case TextConstants.Error:
         return [Colors.CoralRed, Colors.CoralRed];
       default:
         return [Colors.RaisinBlack, Colors.RaisinBlack];
@@ -104,12 +118,12 @@ export default function Index() {
 
   const getTitleText = () => {
     switch (status) {
-      case TextFile.Pending:
-        return TextFile.Creating_Your_Design;
-      case TextFile.Completed:
-        return TextFile.Your_Design_Is_Ready;
-      case TextFile.Error:
-        return TextFile.Something_Went_Wrong;
+      case TextConstants.Pending:
+        return TextConstants.Creating_Your_Design;
+      case TextConstants.Completed:
+        return TextConstants.Your_Design_Is_Ready;
+      case TextConstants.Error:
+        return TextConstants.Something_Went_Wrong;
       default:
         break;
     }
@@ -117,19 +131,20 @@ export default function Index() {
 
   const getSubTitleText = () => {
     switch (status) {
-      case TextFile.Pending:
-        return TextFile.Ready_In_Minutes;
-      case TextFile.Completed:
-        return TextFile.Tap_To_See_It;
-      case TextFile.Error:
-        return TextFile.Click_To_Try_Again;
+      case TextConstants.Pending:
+        return TextConstants.Ready_In_Minutes;
+      case TextConstants.Completed:
+        return TextConstants.Tap_To_See_It;
+      case TextConstants.Error:
+        return TextConstants.Click_To_Try_Again;
       default:
         break;
     }
   };
 
   const getRightBoxContent = () => {
-    const WrapperView = status === TextFile.Completed ? TouchableOpacity : View;
+    const WrapperView =
+      status === TextConstants.Completed ? TouchableOpacity : View;
     return (
       <LinearGradient
         style={styles.topBoxRightContainer}
@@ -140,12 +155,25 @@ export default function Index() {
         <CustomText weight="800" style={styles.titleText} color={Colors.White}>
           {getTitleText()}
         </CustomText>
-        <WrapperView onPress={() => router.push("/outputScreen")}>
+        <WrapperView
+          onPress={() =>
+            router.push({
+              pathname: "/outputScreen",
+              params: {
+                prompt: prompt,
+                generatedImage: generatedImage,
+                logoStyle:  selectedLogoStyle
+              },
+            })
+          }
+        >
           <CustomText
             weight="500"
             style={styles.subTitleText}
             color={
-              status === TextFile.Pending ? Colors.DimGrey : Colors.LightGrey
+              status === TextConstants.Pending
+                ? Colors.DimGrey
+                : Colors.LightGrey
             }
           >
             {getSubTitleText()}
@@ -155,26 +183,37 @@ export default function Index() {
     );
   };
 
-  const onCreateButtonPress = () => {
-    setStatus(TextFile.Pending);
-    setTimeout(() => {
-      setStatus(TextFile.Completed);
-    }, 2000);
-    setTimeout(() => {
-      setStatus(TextFile.Error);
-    }, 5000);
+  const onCreateButtonPress = async () => {
+    try {
+      setStatus(TextConstants.Pending);
+      const id = await handleCreate(prompt, selectedLogoStyle);
+
+      const unsubscribe = subscribeToStatus(id, (newStatus, newImageUrl) => {
+        setStatus(newStatus as any);
+        if (newStatus === TextConstants.Completed) {
+          setGeneratedImage(newImageUrl || "");
+          unsubscribe();
+        }
+        if (newStatus === TextConstants.Error) {
+          unsubscribe();
+        }
+      });
+    } catch (error) {
+      console.error("Error creating request:", error);
+      setStatus(TextConstants.Error);
+    }
   };
 
   const LogoStyleItem = ({ item }: { item: LogoDataProps }) => {
     return (
       <TouchableOpacity
         style={styles.item}
-        onPress={() => setSelectedLogoStyle(item.id)}
+        onPress={() => setSelectedLogoStyle(item.name)}
       >
         <View
           style={[
             {
-              borderColor: item.id === selectedLogoStyle ? Colors.White : "",
+              borderColor: item.name === selectedLogoStyle ? Colors.White : "",
             },
             styles.logo,
           ]}
@@ -183,9 +222,11 @@ export default function Index() {
         </View>
 
         <CustomText
-          weight={item.id === selectedLogoStyle ? "700" : "regular"}
+          weight={item.name === selectedLogoStyle ? "700" : "regular"}
           style={styles.logoName}
-          color={item.id === selectedLogoStyle ? Colors.White : Colors.DimGrey}
+          color={
+            item.name === selectedLogoStyle ? Colors.White : Colors.DimGrey
+          }
         >
           {item.name}
         </CustomText>
@@ -194,85 +235,91 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Wrapper>
-        <View style={styles.header}>
-          <CustomText weight="800" style={styles.headerText}>
-            {TextFile.AI_Logo}
-          </CustomText>
-        </View>
-        <View style={styles.centerContainer}>
-          {status !== "" && (
-            <View style={styles.processContainer}>
-              {getLeftBoxContent()}
-              {getRightBoxContent()}
-            </View>
-          )}
-          <View style={styles.detailsContainer}>
-            <CustomText
-              weight="800"
-              style={styles.promptText}
-              color={Colors.White}
-            >
-              {TextFile.Enter_Your_Prompt}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <SafeAreaView style={styles.container}>
+        <Wrapper>
+          <View style={styles.header}>
+            <CustomText weight="800" style={styles.headerText}>
+              {TextConstants.AI_Logo}
             </CustomText>
-            <View style={styles.rightContainer}>
-              <Image
-                style={styles.diceImage}
-                source={require("../assets/images/dice.png")}
-              />
+          </View>
+          <View style={styles.centerContainer}>
+            {status !== "" && (
+              <View style={styles.processContainer}>
+                {getLeftBoxContent()}
+                {getRightBoxContent()}
+              </View>
+            )}
+            <View style={styles.detailsContainer}>
               <CustomText
-                weight="regular"
-                style={styles.surpiseText}
+                weight="800"
+                style={styles.promptText}
                 color={Colors.White}
               >
-                {TextFile.Surprise_Me}
+                {TextConstants.Enter_Your_Prompt}
+              </CustomText>
+              <View style={styles.rightContainer}>
+                <Image
+                  style={styles.diceImage}
+                  source={PNGImages.Dice}
+                />
+                <CustomText
+                  weight="regular"
+                  style={styles.surpiseText}
+                  color={Colors.White}
+                >
+                  {TextConstants.Surprise_Me}
+                </CustomText>
+              </View>
+            </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                value={prompt}
+                onChangeText={(val) => {
+                  prompt?.length !== 500 && setPrompt(val)
+                  if(status !== "") return setStatus("")
+                }}
+                placeholder={TextConstants.Placeholder}
+                multiline={true}
+                style={styles.inputTextColor}
+                placeholderTextColor={Colors.DimGrey}
+              />
+              <CustomText
+                style={styles.testCount}
+                weight="500"
+                color={Colors.White}
+              >
+                {`${prompt.length}/500`}
               </CustomText>
             </View>
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              value={prompt}
-              onChangeText={(val) => prompt?.length !== 500 && setPrompt(val)}
-              placeholder={TextFile.Placeholder}
-              multiline={true}
-              style={styles.inputTextColor}
-              placeholderTextColor={Colors.DimGrey}
-            />
             <CustomText
-              style={styles.testCount}
-              weight="500"
+              weight="800"
+              style={styles.logoStylesText}
               color={Colors.White}
             >
-              {`${prompt.length}/500`}
+              {TextConstants.Logo_Styles}
             </CustomText>
+            <FlatList
+              horizontal={true}
+              data={logoStyles}
+              showsHorizontalScrollIndicator={false}
+              style={styles.flatList}
+              renderItem={({ item }) => <LogoStyleItem item={item} />}
+            />
           </View>
-          <CustomText
-            weight="800"
-            style={styles.logoStylesText}
+          <CustomButton
+            text={TextConstants.Create}
+            textStyle={styles.buttonText}
+            containerStyle={styles.buttonContainer}
             color={Colors.White}
-          >
-            {TextFile.Logo_Styles}
-          </CustomText>
-          <FlatList
-            horizontal={true}
-            data={logoStyles}
-            showsHorizontalScrollIndicator={false}
-            style={styles.flatList}
-            renderItem={({ item }) => <LogoStyleItem item={item} />}
+            weight="800"
+            prefix={<Spark />}
+            disabled={prompt.trim().length === 0}
+            onPress={() => onCreateButtonPress()}
           />
-        </View>
-        <CustomButton
-          text={TextFile.Create}
-          textStyle={styles.buttonText}
-          containerStyle={styles.buttonContainer}
-          color={Colors.White}
-          weight="800"
-          prefix={<Spark />}
-          onPress={() => onCreateButtonPress()}
-        />
-      </Wrapper>
-    </SafeAreaView>
+        </Wrapper>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -334,6 +381,7 @@ const styles = StyleSheet.create({
   },
   inputTextColor: {
     color: Colors.White,
+    flex: 1
   },
   testCount: {
     position: "absolute",
